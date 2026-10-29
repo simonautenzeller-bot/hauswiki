@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hauswiki-cache-v2';
+const CACHE_NAME = 'hauswiki-cache-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -17,7 +17,10 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    // cache: 'reload' umgeht den HTTP-Cache (GitHub Pages: 10 min), sonst landet die alte Version im neuen Cache.
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL.map((url) => new Request(url, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -36,7 +39,7 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
+      const network = fetch(event.request, { cache: 'no-cache' })
         .then((response) => {
           if (response && response.ok) {
             const clone = response.clone();
