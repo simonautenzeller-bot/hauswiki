@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#2e7d32" />
+<meta name="description" content="Das Wissen rund ums Haus: Notizen, Aufgaben übers Jahr, Geräte, Zähler und Kontakte" />
+<title>Hauswiki+</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icons/icon.svg" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<header class="app-header">
+  <h1>Hauswiki+</h1>
+</header>
+
+<main id="main-content" tabindex="-1">
+
+  <!-- Start: Suche + Jetzt dran -->
+  <section id="view-start" class="view" aria-labelledby="start-heading">
+    <h2 id="start-heading" class="visually-hidden">Start</h2>
+    <div class="search-wrap" role="search">
+      <label for="search-input" class="visually-hidden">Im Hauswiki suchen</label>
+      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <input type="search" id="search-input" placeholder="Heizung, Holz, Frühling, Bodenleger …" autocomplete="off" enterkeyhint="search" />
+      <button type="button" class="btn-icon search-clear" id="btn-search-clear" aria-label="Suche leeren" hidden>✕</button>
+    </div>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <div id="start-content"></div>
+  </section>
+
+  <!-- Bereiche -->
+  <section id="view-areas" class="view" aria-labelledby="areas-heading" hidden>
+    <div class="view-header">
+      <h2 id="areas-heading">Bereiche</h2>
+      <button type="button" class="btn btn-secondary" data-action="new-area">+ Bereich</button>
+    </div>
+    <ul class="area-grid" id="areas-grid"></ul>
+  </section>
+
+  <section id="view-area" class="view" hidden></section>
+
+  <!-- Jahr -->
+  <section id="view-year" class="view" aria-labelledby="year-heading" hidden>
+    <h2 id="year-heading">Das Jahr im Haus</h2>
+    <p class="hint">Was wann ansteht – ab dem aktuellen Monat für die nächsten 12 Monate.</p>
+    <div id="year-content"></div>
+  </section>
+
+  <!-- Kontakte -->
+  <section id="view-contacts" class="view" aria-labelledby="contacts-heading" hidden>
+    <div class="view-header">
+      <h2 id="contacts-heading">Kontakte</h2>
+      <button type="button" class="btn btn-primary" data-action="new" data-type="contact">+ Kontakt</button>
+    </div>
+    <div class="chip-row" id="contacts-chips" role="group" aria-label="Nach Gewerk filtern"></div>
+    <ul class="item-list" id="contacts-list"></ul>
+  </section>
+
+  <section id="view-entry" class="view" hidden></section>
+  <section id="view-contact" class="view" hidden></section>
+
+  <!-- Einstellungen -->
+  <section id="view-settings" class="view" aria-labelledby="settings-heading" hidden>
+    <h2 id="settings-heading">Einstellungen</h2>
+
+    <section class="settings-block" aria-labelledby="theme-heading">
+      <h3 id="theme-heading">Darstellung</h3>
+      <div class="segmented" role="radiogroup" aria-labelledby="theme-heading" id="theme-switcher">
+        <button type="button" role="radio" data-theme="light" aria-checked="false">Hell</button>
+        <button type="button" role="radio" data-theme="dark" aria-checked="false">Dunkel</button>
+        <button type="button" role="radio" data-theme="dim" aria-checked="false">Dim</button>
+        <button type="button" role="radio" data-theme="sky" aria-checked="false">Himmel</button>
+        <button type="button" role="radio" data-theme="system" aria-checked="false">System</button>
+      </div>
+    </section>
+
+    <section class="settings-block" aria-labelledby="data-heading">
+      <h3 id="data-heading">Daten</h3>
+      <p class="hint">Alles liegt ausschließlich auf diesem Gerät: Texte im Browser-Speicher, Fotos und PDFs in der IndexedDB. Ein Backup enthält beides in einer Datei.</p>
+      <p class="hint" id="storage-info"></p>
+      <div class="button-row">
+        <button type="button" class="btn btn-secondary" data-action="export">Backup herunterladen</button>
+        <button type="button" class="btn btn-secondary" data-action="import">Backup einspielen</button>
+        <input type="file" id="file-import" accept="application/json,text/plain,.json,.txt" class="visually-hidden" tabindex="-1" />
+      </div>
+      <button type="button" class="btn btn-danger" data-action="reset">Alle Daten löschen</button>
+    </section>
+
+    <section class="settings-block" aria-labelledby="backup-heading">
+      <h3 id="backup-heading">Wochen-Backup</h3>
+      <div id="backup-slot"></div>
+    </section>
+
+    <section class="settings-block" aria-labelledby="about-heading">
+      <h3 id="about-heading">Über die App</h3>
+      <p class="hint">Hauswiki+ Version <span id="app-version"></span></p>
+    </section>
+  </section>
+
+</main>
+
+<button type="button" class="fab" id="fab" data-action="add-menu" aria-label="Neuen Eintrag anlegen">
+  <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<nav class="bottom-nav" aria-label="Hauptnavigation">
+  <button type="button" class="nav-btn" data-view="start" aria-current="page">
+    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 3 10v11h6v-6h6v6h6V10z"/></svg>
+    <span>Start</span>
+  </button>
+  <button type="button" class="nav-btn" data-view="bereiche">
+    <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>
+    <span>Bereiche</span>
+  </button>
+  <button type="button" class="nav-btn" data-view="jahr">
+    <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+    <span>Jahr</span>
+  </button>
+  <button type="button" class="nav-btn" data-view="kontakte">
+    <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+    <span>Kontakte</span>
+  </button>
+  <button type="button" class="nav-btn" data-view="einstellungen">
+    <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    <span>Mehr</span>
+  </button>
+</nav>
+
+<!-- Was soll angelegt werden? -->
+<dialog id="add-dialog" aria-labelledby="add-dialog-title">
+  <h2 id="add-dialog-title">Neu anlegen</h2>
+  <div class="type-grid">
+    <button type="button" class="type-btn" data-action="new" data-type="note"><span aria-hidden="true">📝</span><strong>Notiz</strong><small>Wissen, Fotos, Hinweise</small></button>
+    <button type="button" class="type-btn" data-action="new" data-type="task"><span aria-hidden="true">✅</span><strong>Aufgabe</strong><small>Wiederkehrend im Jahr</small></button>
+    <button type="button" class="type-btn" data-action="new" data-type="device"><span aria-hidden="true">🔧</span><strong>Gerät</strong><small>Anleitung, Garantie</small></button>
+    <button type="button" class="type-btn" data-action="new" data-type="meter"><span aria-hidden="true">📈</span><strong>Zähler</strong><small>Gas, Strom, Wasser</small></button>
+    <button type="button" class="type-btn" data-action="new" data-type="contact"><span aria-hidden="true">👤</span><strong>Kontakt</strong><small>Handwerker, Firmen</small></button>
+  </div>
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button>
+  </div>
+</dialog>
+
+<dialog id="form-dialog">
+  <form id="entity-form" novalidate>
+    <h2 id="form-dialog-title">Titel</h2>
+    <div id="form-fields"></div>
+    <p class="form-error" id="form-error" role="alert" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button>
+      <button type="submit" class="btn btn-primary" id="btn-form-submit">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="viewer-dialog" class="viewer" aria-label="Foto ansehen">
+  <img id="viewer-img" alt="" />
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-secondary" data-action="viewer-download">Speichern</button>
+    <button type="button" class="btn btn-primary" data-action="close-dialog">Schließen</button>
+  </div>
+</dialog>
+
+<dialog id="confirm-dialog">
+  <p id="confirm-text"></p>
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-secondary" value="cancel" id="confirm-cancel">Abbrechen</button>
+    <button type="button" class="btn btn-primary" value="ok" id="confirm-ok">OK</button>
+  </div>
+</dialog>
+
+<input type="file" id="input-camera" accept="image/*" capture="environment" class="visually-hidden" tabindex="-1" />
+<input type="file" id="input-files" accept="image/*,application/pdf" multiple class="visually-hidden" tabindex="-1" />
+
+<script src="js/store.js"></script>
+<script src="js/search.js"></script>
+<script src="js/backup.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
