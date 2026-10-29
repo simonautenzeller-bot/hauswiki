@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hauswiki-cache-v1';
+const CACHE_NAME = 'hauswiki-cache-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -10,6 +10,9 @@ const APP_SHELL = [
   './js/ui.js',
   './js/main.js',
   './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
