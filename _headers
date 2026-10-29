@@ -1,0 +1,5 @@
+# Cloudflare Pages: Service Worker und Manifest nie aus dem HTTP-Cache, damit Updates sofort ankommen.
+/service-worker.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
