@@ -44,19 +44,23 @@ Herunterladen/Einspielen unter **Mehr → Daten**.
 alltagplus), mit einer kleinen, rückwärtskompatiblen Erweiterung:
 `opts.getSnapshot()` darf das Backup asynchron liefern – hier inkl. Fotos und PDFs
 aus IndexedDB. Ohne `getSnapshot` verhält sie sich wie bisher.
-Weiterleitungs-URI für die Microsoft-App-Registrierung: die Cloudflare-Adresse
-der App (siehe unten), mit `/` am Ende.
+Weiterleitungs-URI für die Microsoft-App-Registrierung:
+`https://hauswiki.simon-autenzeller.workers.dev/`.
 
 ## Veröffentlichung
 
-**Cloudflare Pages**, verbunden mit dem GitHub-Repo `simonautenzeller-bot/hauswiki`:
-jeder Push auf `main` geht automatisch live. Kein Build-Befehl, Ausgabeordner `/`.
-`_headers` sorgt dafür, dass Service Worker und Manifest nicht im HTTP-Cache hängen.
+**https://hauswiki.simon-autenzeller.workers.dev/**
+
+Cloudflare Worker (statische Assets), verbunden mit dem GitHub-Repo
+`simonautenzeller-bot/hauswiki`: jeder Push auf `main` geht automatisch live.
+`_headers` sorgt dafür, dass Service Worker und Manifest nicht im HTTP-Cache
+hängen; `.assetsignore` hält interne Dateien (`.claude`, `serve.ps1`, README)
+aus der ausgelieferten Seite.
 
 Warum nicht GitHub Pages: Dort liegen alle Apps unter derselben Adresse
 `simonautenzeller-bot.github.io` und teilen sich damit Browser-Speicher,
 Berechtigungen und Chromes Installations-Einträge. Bei Cloudflare bekommt jede
-App eine eigene Adresse (`<projekt>.pages.dev`).
+App eine eigene Adresse (`<projekt>.simon-autenzeller.workers.dev`).
 
 ## Lokal testen
 
