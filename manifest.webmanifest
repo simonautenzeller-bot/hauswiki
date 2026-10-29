@@ -1,9 +1,9 @@
 {
-  "id": "/hauswiki/",
+  "id": "/hauswiki/app",
   "name": "Hauswiki+",
   "short_name": "Hauswiki+",
   "description": "Das Wissen rund ums Haus: Notizen, Aufgaben übers Jahr, Geräte, Zähler und Kontakte",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

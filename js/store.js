@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '0.1.2';
+  const APP_VERSION = '0.1.3';
   const KEY = 'hauswiki:v1';
   const DB_NAME = 'hauswiki-files';
 
