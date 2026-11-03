@@ -284,7 +284,7 @@
           <span class="item-meta">${areaBadge(e.areaId)}${docs ? ` 📎 ${docs} ${docs === 1 ? 'Dokument' : 'Dokumente'}` : ''}</span>
           ${e.text ? `<span class="item-note">${esc(snippet(e.text, 160))}</span>` : ''}
         </button>
-        ${photos.length ? `<div class="tl-photos${photos.length === 1 ? ' single' : ''}">${photos.map((f) =>
+        ${photos.length ? `<div class="tl-photos">${photos.map((f) =>
           `<button type="button" class="tl-photo" data-action="open-file" data-id="${esc(f.id)}" data-name="${esc(f.name)}" data-type="${esc(f.type)}" aria-label="Foto ${esc(f.name)} ansehen"><img data-file-id="${esc(f.id)}" alt="" /></button>`).join('')}</div>` : ''}
       </div>
     </li>`;

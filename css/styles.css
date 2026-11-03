@@ -1063,7 +1063,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 }
 .tl-photo {
   flex: 0 0 auto;
-  width: 120px; height: 120px;
+  width: 72px; height: 72px;
   padding: 0;
   border: none;
   border-radius: 10px;
@@ -1072,7 +1072,6 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
   background: var(--surface-alt);
 }
 .tl-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.tl-photos.single .tl-photo { width: 100%; height: auto; aspect-ratio: 16 / 9; }
 
 /* Jahr */
 .month-block.current .section-title { color: var(--primary); }
