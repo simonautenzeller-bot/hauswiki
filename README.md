@@ -19,11 +19,13 @@ Hausplaner+.
 - **Eintragstypen:** Notiz, Aufgabe (Monate), Gerät (Hersteller, Modell,
   Seriennummer, Kauf, Garantie – läuft sie in 90 Tagen ab, erscheint ein
   Hinweis auf der Startseite), Zähler (Ablesungen mit Foto, Verbrauch und
-  Ø pro Tag).
+  Ø pro Tag), Ereignis (Datum, erscheint im Zeitstrahl).
 - **Fotos & PDFs** an jedem Eintrag; Fotos werden auf max. 1600 px verkleinert.
 - **Kontakte** mit Gewerk, Telefon (direkt anrufen), E-Mail, Adresse, Notizen
   und Verknüpfung zu Einträgen und Bereichen.
 - **Jahr:** alle Aufgaben der nächsten 12 Monate.
+- **Zeitstrahl:** Ereignisse rund ums Haus (Notartermin, Schlüsselübergabe, Boden
+  raus …) mit Datum, Text und Fotos/PDFs, nach Jahren gruppiert, das Neueste oben.
 
 Beim ersten Start legt die App einen Grundstock typischer Aufgaben und die
 Zähler Gas/Strom/Wasser an – alles änder- und löschbar.

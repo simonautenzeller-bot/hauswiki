@@ -15,6 +15,7 @@
     task: ['aufgabe', 'todo', 'erledigen'],
     device: ['gerät', 'geraet', 'anleitung', 'garantie', 'handbuch'],
     meter: ['zähler', 'zaehler', 'zählerstand', 'ablesung'],
+    event: ['ereignis', 'zeitstrahl', 'chronik', 'meilenstein'],
   };
 
   function norm(s) {
@@ -43,7 +44,7 @@
       [e.title, 6],
       [(e.tags || []).join(' '), 4],
       [area ? area.name + ' ' + (area.keywords || []).join(' ') : '', 3],
-      [[e.manufacturer, e.model, e.serial, e.dealer, e.meterNo].filter(Boolean).join(' '), 3],
+      [[e.manufacturer, e.model, e.serial, e.dealer, e.meterNo, e.date].filter(Boolean).join(' '), 3],
       [contacts.map((c) => [c.name, c.company, c.trade].join(' ')).join(' '), 2],
       [(TYPE_WORDS[e.type] || []).join(' '), 2],
       [e.text, 1],

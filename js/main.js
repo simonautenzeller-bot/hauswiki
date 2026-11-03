@@ -48,6 +48,7 @@
     start: 'view-start',
     bereiche: 'view-areas',
     bereich: 'view-area',
+    zeitstrahl: 'view-timeline',
     jahr: 'view-year',
     kontakte: 'view-contacts',
     kontakt: 'view-contact',
@@ -81,6 +82,7 @@
       ui.renderSearch($('search-input').value);
     } else if (name === 'bereiche') ui.renderAreas();
     else if (name === 'bereich') ui.renderArea(id);
+    else if (name === 'zeitstrahl') ui.renderTimeline();
     else if (name === 'jahr') ui.renderYear();
     else if (name === 'kontakte') ui.renderContacts(contactFilter);
     else if (name === 'kontakt') ui.renderContact(id);
@@ -186,12 +188,15 @@
     task: 'Was ist zu tun, worauf achten?',
     device: 'Besonderheiten, Wartung, Fehlercodes …',
     meter: 'z. B. Wo hängt der Zähler?',
+    event: 'Was wurde gemacht, wer war dabei, was ist aufgefallen?',
   };
+  const TITLE_PLACEHOLDERS = { device: 'z. B. Geschirrspüler', event: 'z. B. Schlüsselübergabe, Notartermin, Boden raus' };
 
   function entryForm(type, existing, { areaId, title } = {}) {
     const e = existing || { type, areaId: areaId || 'area-allgemein', title: title || '', tags: [], contactIds: [] };
     const t = ui.TYPES[e.type];
-    let html = field('title', 'Titel', e.title, { required: true, placeholder: e.type === 'device' ? 'z. B. Geschirrspüler' : '' });
+    let html = field('title', 'Titel', e.title, { required: true, placeholder: TITLE_PLACEHOLDERS[e.type] || '' });
+    if (e.type === 'event') html += field('date', 'Datum', e.date || todayIso(), { type: 'date', required: true });
     html += select('areaId', 'Bereich', areaOptions(), e.areaId);
     if (e.type === 'task') html += monthsPicker(e.months);
     if (e.type === 'device') {
@@ -224,7 +229,8 @@
         patch.months = fd.getAll('months').map(Number).sort((a, b) => a - b);
         if (!patch.months.length) return 'Bitte mindestens einen Monat wählen.';
       }
-      ['manufacturer', 'model', 'serial', 'purchaseDate', 'warrantyUntil', 'dealer', 'unit', 'meterNo'].forEach((k) => {
+      if (e.type === 'event' && !fd.get('date')) return 'Bitte ein Datum wählen.';
+      ['date', 'manufacturer', 'model', 'serial', 'purchaseDate', 'warrantyUntil', 'dealer', 'unit', 'meterNo'].forEach((k) => {
         if (fd.has(k)) patch[k] = String(fd.get(k)).trim();
       });
       if (existing) {

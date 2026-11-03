@@ -46,6 +46,16 @@
 
   <section id="view-area" class="view" hidden></section>
 
+  <!-- Zeitstrahl -->
+  <section id="view-timeline" class="view" aria-labelledby="timeline-heading" hidden>
+    <div class="view-header">
+      <h2 id="timeline-heading">Zeitstrahl</h2>
+      <button type="button" class="btn btn-primary" data-action="new" data-type="event">+ Ereignis</button>
+    </div>
+    <p class="hint">Was wann am Haus passiert ist – das Neueste steht oben.</p>
+    <div id="timeline-content"></div>
+  </section>
+
   <!-- Jahr -->
   <section id="view-year" class="view" aria-labelledby="year-heading" hidden>
     <h2 id="year-heading">Das Jahr im Haus</h2>
@@ -119,6 +129,10 @@
     <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>
     <span>Bereiche</span>
   </button>
+  <button type="button" class="nav-btn" data-view="zeitstrahl">
+    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v18"/><circle cx="7" cy="7" r="2.5"/><circle cx="7" cy="17" r="2.5"/><path d="M13 7h8M13 17h8"/></svg>
+    <span>Zeitstrahl</span>
+  </button>
   <button type="button" class="nav-btn" data-view="jahr">
     <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
     <span>Jahr</span>
@@ -137,6 +151,7 @@
 <dialog id="add-dialog" aria-labelledby="add-dialog-title">
   <h2 id="add-dialog-title">Neu anlegen</h2>
   <div class="type-grid">
+    <button type="button" class="type-btn" data-action="new" data-type="event"><span aria-hidden="true">📍</span><strong>Ereignis</strong><small>Für den Zeitstrahl, mit Fotos</small></button>
     <button type="button" class="type-btn" data-action="new" data-type="note"><span aria-hidden="true">📝</span><strong>Notiz</strong><small>Wissen, Fotos, Hinweise</small></button>
     <button type="button" class="type-btn" data-action="new" data-type="task"><span aria-hidden="true">✅</span><strong>Aufgabe</strong><small>Wiederkehrend im Jahr</small></button>
     <button type="button" class="type-btn" data-action="new" data-type="device"><span aria-hidden="true">🔧</span><strong>Gerät</strong><small>Anleitung, Garantie</small></button>

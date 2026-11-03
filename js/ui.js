@@ -10,6 +10,7 @@
     task: { icon: '✅', label: 'Aufgabe' },
     device: { icon: '🔧', label: 'Gerät' },
     meter: { icon: '📈', label: 'Zähler' },
+    event: { icon: '📍', label: 'Ereignis' },
   };
 
   const $ = (id) => document.getElementById(id);
@@ -88,6 +89,7 @@
     const parts = [];
     if (e.type === 'task' && e.months?.length) parts.push('📅 ' + monthsLabel(e.months));
     if (e.type === 'device' && (e.manufacturer || e.model)) parts.push([e.manufacturer, e.model].filter(Boolean).join(' '));
+    if (e.type === 'event') parts.push(fmtDate(e.date));
     if (e.type === 'meter') {
       const last = (e.readings || [])[e.readings.length - 1];
       parts.push(last ? `Letzter Stand ${fmtNum(last.value, 3)} ${esc(e.unit || '')} am ${fmtDate(last.date)}` : 'Noch keine Ablesung');
@@ -143,6 +145,7 @@
 
   const tasksIn = (month) => store.getEntries().filter((e) => e.type === 'task' && (e.months || []).includes(month));
   const byTitle = (a, b) => a.title.localeCompare(b.title, 'de');
+  const byDateDesc = (a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt.localeCompare(a.createdAt);
 
   // ---- Start ----
   function renderStart() {
@@ -245,6 +248,7 @@
       ['note', 'Wissen & Notizen'],
       ['device', 'Geräte'],
       ['meter', 'Zähler'],
+      ['event', 'Zeitstrahl'],
     ];
     let html = backBar('Bereiche') + `<div class="view-header detail-head" data-accent="${esc(a.color)}">
       <h2><span aria-hidden="true">${esc(a.icon)}</span> ${esc(a.name)}</h2>
@@ -257,13 +261,47 @@
     if (tasks.length) html += `<h3 class="section-title">Aufgaben im Jahr</h3><ul class="task-list">${tasks.map((e) =>
       taskRow(e).replace('<span class="item-meta">', `<span class="item-meta">📅 ${esc(monthsLabel(e.months))} `)).join('')}</ul>`;
     groups.forEach(([type, label]) => {
-      const list = entries.filter((e) => e.type === type).sort(byTitle);
+      const list = entries.filter((e) => e.type === type).sort(type === 'event' ? byDateDesc : byTitle);
       if (list.length) html += `<h3 class="section-title">${label}</h3><ul class="item-list">${list.map((e) => entryCard(e, { showArea: false })).join('')}</ul>`;
     });
     if (contacts.length) html += `<h3 class="section-title">Kontakte</h3><ul class="item-list">${contacts.map(contactCard).join('')}</ul>`;
     if (!entries.length && !contacts.length) html += '<p class="empty-state">Hier steht noch nichts. Leg die erste Notiz an.</p>';
 
     el.innerHTML = html;
+    hydrateImages(el);
+  }
+
+  // ---- Zeitstrahl ----
+  function timelineItem(e) {
+    const day = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+    const photos = e.files.filter((f) => f.type.startsWith('image/'));
+    const docs = e.files.length - photos.length;
+    return `<li class="tl-item">
+      <div class="item-card tl-card">
+        <button type="button" class="tl-open" data-action="open-entry" data-id="${esc(e.id)}">
+          <span class="tl-date">${esc(day)}</span>
+          <span class="item-title">${esc(e.title)}</span>
+          <span class="item-meta">${areaBadge(e.areaId)}${docs ? ` 📎 ${docs} ${docs === 1 ? 'Dokument' : 'Dokumente'}` : ''}</span>
+          ${e.text ? `<span class="item-note">${esc(snippet(e.text, 160))}</span>` : ''}
+        </button>
+        ${photos.length ? `<div class="tl-photos${photos.length === 1 ? ' single' : ''}">${photos.map((f) =>
+          `<button type="button" class="tl-photo" data-action="open-file" data-id="${esc(f.id)}" data-name="${esc(f.name)}" data-type="${esc(f.type)}" aria-label="Foto ${esc(f.name)} ansehen"><img data-file-id="${esc(f.id)}" alt="" /></button>`).join('')}</div>` : ''}
+      </div>
+    </li>`;
+  }
+
+  function renderTimeline() {
+    const el = $('timeline-content');
+    const events = store.getEntries().filter((e) => e.type === 'event').sort(byDateDesc);
+    if (!events.length) {
+      el.innerHTML = '<p class="empty-state">Noch nichts eingetragen. Notartermin, Schlüsselübergabe, Boden raus: Mit „+ Ereignis“ und ein paar Fotos festhalten.</p>';
+      return;
+    }
+    const years = [...new Set(events.map((e) => e.date.slice(0, 4)))];
+    el.innerHTML = years.map((y) => `<section>
+      <h3 class="section-title">${esc(y)}</h3>
+      <ol class="timeline">${events.filter((e) => e.date.startsWith(y)).map(timelineItem).join('')}</ol>
+    </section>`).join('');
     hydrateImages(el);
   }
 
@@ -318,6 +356,7 @@
   }
 
   function typeBlock(e) {
+    if (e.type === 'event') return dl([['Datum', fmtDate(e.date)]]);
     if (e.type === 'task') {
       const s = store.taskStatus(e);
       let status = 'Gerade nicht dran.';
@@ -454,6 +493,6 @@
 
   window.UI = {
     TYPES, esc, fmtDate, monthsLabel, fileUrl,
-    renderStart, renderSearch, renderAreas, renderArea, renderYear, renderContacts, renderEntry, renderContact, renderSettings,
+    renderStart, renderSearch, renderAreas, renderArea, renderTimeline, renderYear, renderContacts, renderEntry, renderContact, renderSettings,
   };
 })();
