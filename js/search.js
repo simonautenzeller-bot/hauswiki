@@ -15,7 +15,7 @@
     task: ['aufgabe', 'todo', 'erledigen'],
     device: ['gerät', 'geraet', 'anleitung', 'garantie', 'handbuch'],
     meter: ['zähler', 'zaehler', 'zählerstand', 'ablesung'],
-    event: ['ereignis', 'zeitstrahl', 'chronik', 'meilenstein'],
+    event: ['ereignis', 'zeitstrahl', 'chronik'],
   };
 
   function norm(s) {
@@ -47,6 +47,7 @@
       [[e.manufacturer, e.model, e.serial, e.dealer, e.meterNo, e.date].filter(Boolean).join(' '), 3],
       [contacts.map((c) => [c.name, c.company, c.trade].join(' ')).join(' '), 2],
       [(TYPE_WORDS[e.type] || []).join(' '), 2],
+      [[e.milestone && 'meilenstein', e.planned && 'termin geplant'].filter(Boolean).join(' '), 3],
       [e.text, 1],
       [(e.files || []).map((f) => f.name).join(' '), 1],
     ].map(([t, w]) => [norm(t), w]);

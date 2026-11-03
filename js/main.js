@@ -59,6 +59,7 @@
   let lastNav = 'start';
   let navCount = 0;
   let contactFilter = '';
+  let onlyMilestones = false;
 
   function parseHash() {
     const [name, id] = location.hash.slice(1).split('/');
@@ -82,7 +83,7 @@
       ui.renderSearch($('search-input').value);
     } else if (name === 'bereiche') ui.renderAreas();
     else if (name === 'bereich') ui.renderArea(id);
-    else if (name === 'zeitstrahl') ui.renderTimeline();
+    else if (name === 'zeitstrahl') ui.renderTimeline(onlyMilestones);
     else if (name === 'jahr') ui.renderYear();
     else if (name === 'kontakte') ui.renderContacts(contactFilter);
     else if (name === 'kontakt') ui.renderContact(id);
@@ -151,10 +152,7 @@
   }
   const areaOptions = () => store.getAreas().map((a) => [a.id, a.icon + ' ' + a.name]);
   const splitList = (s) => String(s || '').split(',').map((t) => t.trim()).filter(Boolean);
-  const todayIso = () => {
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  };
+  const todayIso = store.todayIso;
 
   // ---------- Bilder verkleinern ----------
   async function compressImage(file, max = 1600, quality = 0.82) {
@@ -190,13 +188,16 @@
     meter: 'z. B. Wo hängt der Zähler?',
     event: 'Was wurde gemacht, wer war dabei, was ist aufgefallen?',
   };
-  const TITLE_PLACEHOLDERS = { device: 'z. B. Geschirrspüler', event: 'z. B. Schlüsselübergabe, Notartermin, Boden raus' };
+  const TITLE_PLACEHOLDERS = { device: 'z. B. Geschirrspüler', event: 'z. B. Notartermin, Boden raus, Verputzer kommen' };
 
   function entryForm(type, existing, { areaId, title } = {}) {
     const e = existing || { type, areaId: areaId || 'area-allgemein', title: title || '', tags: [], contactIds: [] };
     const t = ui.TYPES[e.type];
     let html = field('title', 'Titel', e.title, { required: true, placeholder: TITLE_PLACEHOLDERS[e.type] || '' });
-    if (e.type === 'event') html += field('date', 'Datum', e.date || todayIso(), { type: 'date', required: true });
+    if (e.type === 'event') {
+      html += field('date', 'Datum', e.date || todayIso(), { type: 'date', required: true, hint: 'Liegt es in der Zukunft, erscheint es als Termin unter „Als Nächstes“.' });
+      html += `<label class="checkbox-row"><input type="checkbox" name="milestone"${e.milestone ? ' checked' : ''} /> <span>⭐ Meilenstein, z. B. Notartermin oder Einzug</span></label>`;
+    }
     html += select('areaId', 'Bereich', areaOptions(), e.areaId);
     if (e.type === 'task') html += monthsPicker(e.months);
     if (e.type === 'device') {
@@ -233,6 +234,11 @@
       ['date', 'manufacturer', 'model', 'serial', 'purchaseDate', 'warrantyUntil', 'dealer', 'unit', 'meterNo'].forEach((k) => {
         if (fd.has(k)) patch[k] = String(fd.get(k)).trim();
       });
+      if (e.type === 'event') {
+        patch.milestone = fd.has('milestone');
+        // Ein offener Termin bleibt offen, solange sein Datum nicht geändert wird; Vergangenes gilt als erledigt.
+        patch.planned = patch.date > todayIso() || (!!existing?.planned && patch.date === existing.date);
+      }
       if (existing) {
         store.saveEntry({ ...patch, id: existing.id });
         toast('Gespeichert');
@@ -243,6 +249,18 @@
       if (files?.length) await store.attachFiles(created.id, await prepareFiles(files));
       toast('Angelegt');
       go('eintrag/' + encodeURIComponent(created.id));
+      return true;
+    });
+  }
+
+  function rescheduleForm(entry) {
+    const today = todayIso();
+    const html = field('date', 'Neues Datum', entry.date > today ? entry.date : today, { type: 'date', required: true });
+    openForm('Verschieben: ' + entry.title, html, (form) => {
+      const date = String(new FormData(form).get('date') || '');
+      if (!date || date < today) return 'Bitte ein Datum ab heute wählen.';
+      store.saveEntry({ id: entry.id, date, planned: true });
+      toast('Verschoben auf ' + ui.fmtDate(date));
       return true;
     });
   }
@@ -426,6 +444,13 @@
       back();
     },
     'toggle-task': (d) => store.toggleTaskDone(d.id),
+    'complete-event': (d) => {
+      store.completeEvent(d.id);
+      toast('Erledigt. Hier kannst du Fotos anhängen.');
+      go('eintrag/' + encodeURIComponent(d.id));
+    },
+    'reschedule-event': (d) => rescheduleForm(store.getEntry(d.id)),
+    'filter-timeline': (d) => { onlyMilestones = d.value === 'milestones'; ui.renderTimeline(onlyMilestones); },
     'add-reading': (d) => readingForm(store.getEntry(d.id)),
     'delete-reading': async (d) => {
       if (await confirmDialog('Diese Ablesung löschen?', 'Löschen')) await store.deleteReading(d.entry, d.id);

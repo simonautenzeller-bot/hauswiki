@@ -89,7 +89,7 @@
     const parts = [];
     if (e.type === 'task' && e.months?.length) parts.push('📅 ' + monthsLabel(e.months));
     if (e.type === 'device' && (e.manufacturer || e.model)) parts.push([e.manufacturer, e.model].filter(Boolean).join(' '));
-    if (e.type === 'event') parts.push(fmtDate(e.date));
+    if (e.type === 'event') parts.push((e.milestone ? '⭐ ' : '') + fmtDate(e.date));
     if (e.type === 'meter') {
       const last = (e.readings || [])[e.readings.length - 1];
       parts.push(last ? `Letzter Stand ${fmtNum(last.value, 3)} ${esc(e.unit || '')} am ${fmtDate(last.date)}` : 'Noch keine Ablesung');
@@ -164,7 +164,16 @@
 
     const recent = [...store.getEntries()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
 
-    let html = `<div class="view-header"><h3 class="section-title">Jetzt dran · ${MONTH_NAMES[m - 1]}</h3>
+    // Alles, was auf Antwort wartet, plus der nächste kommende Termin
+    const planned = plannedEvents();
+    const dueEvents = planned.filter((e) => store.eventStatus(e) === 'due');
+    const nextEvent = planned.find((e) => store.eventStatus(e) === 'upcoming');
+    const startEvents = nextEvent ? [...dueEvents, nextEvent] : dueEvents;
+
+    let html = startEvents.length
+      ? `<h3 class="section-title tl-next-title">Als Nächstes</h3><ul class="item-list tl-next">${startEvents.map(timelineItem).join('')}</ul>`
+      : '';
+    html += `<div class="view-header"><h3 class="section-title">Jetzt dran · ${MONTH_NAMES[m - 1]}</h3>
       <span class="badge">${open ? open + ' offen' : 'alles erledigt'}</span></div>`;
     html += current.length
       ? `<ul class="task-list">${current.map((e) => taskRow(e)).join('')}</ul>`
@@ -272,36 +281,86 @@
   }
 
   // ---- Zeitstrahl ----
+  const plannedEvents = () => store.getEntries()
+    .filter((e) => e.type === 'event' && store.eventStatus(e) !== 'done')
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  function relativeDay(iso) {
+    const d = daysBetween(store.todayIso(), iso);
+    if (d === 0) return 'heute';
+    if (d === 1) return 'morgen';
+    if (d === -1) return 'gestern';
+    return d > 0 ? `in ${d} Tagen` : `vor ${-d} Tagen`;
+  }
+
+  function eventDateLabel(e) {
+    const date = new Date(e.date + 'T00:00:00');
+    if (store.eventStatus(e) === 'done') return date.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+    const sameYear = e.date.slice(0, 4) === store.todayIso().slice(0, 4);
+    const opts = { weekday: 'short', day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) };
+    return date.toLocaleDateString('de-DE', opts) + ' · ' + relativeDay(e.date);
+  }
+
+  // Bei offenen Terminen: anrufen, verschieben und, sobald der Tag da ist, abschließen.
+  function eventActions(e) {
+    const status = store.eventStatus(e);
+    if (status === 'done') return '';
+    const caller = (e.contactIds || []).map((id) => store.getContact(id)).find((c) => c && c.phone);
+    return `<div class="tl-actions">
+      ${status === 'due' ? `<p class="tl-question">Hat das geklappt?</p>
+        <button type="button" class="btn btn-primary" data-action="complete-event" data-id="${esc(e.id)}">✓ Erledigt</button>` : ''}
+      <button type="button" class="btn btn-secondary" data-action="reschedule-event" data-id="${esc(e.id)}">Verschieben</button>
+      ${caller ? `<a class="btn btn-secondary" href="tel:${esc(caller.phone.replace(/[^\d+]/g, ''))}">📞 ${esc(caller.name)}</a>` : ''}
+    </div>`;
+  }
+
   function timelineItem(e) {
-    const day = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
     const photos = e.files.filter((f) => f.type.startsWith('image/'));
     const docs = e.files.length - photos.length;
-    return `<li class="tl-item">
+    const classes = ['tl-item', store.eventStatus(e) !== 'done' && 'planned', e.milestone && 'milestone'].filter(Boolean).join(' ');
+    return `<li class="${classes}">
       <div class="item-card tl-card">
         <button type="button" class="tl-open" data-action="open-entry" data-id="${esc(e.id)}">
-          <span class="tl-date">${esc(day)}</span>
+          <span class="tl-date">${e.milestone ? '<span aria-hidden="true">⭐ </span><span class="visually-hidden">Meilenstein. </span>' : ''}${esc(eventDateLabel(e))}</span>
           <span class="item-title">${esc(e.title)}</span>
           <span class="item-meta">${areaBadge(e.areaId)}${docs ? ` 📎 ${docs} ${docs === 1 ? 'Dokument' : 'Dokumente'}` : ''}</span>
           ${e.text ? `<span class="item-note">${esc(snippet(e.text, 160))}</span>` : ''}
         </button>
         ${photos.length ? `<div class="tl-photos">${photos.map((f) =>
           `<button type="button" class="tl-photo" data-action="open-file" data-id="${esc(f.id)}" data-name="${esc(f.name)}" data-type="${esc(f.type)}" aria-label="Foto ${esc(f.name)} ansehen"><img data-file-id="${esc(f.id)}" alt="" /></button>`).join('')}</div>` : ''}
+        ${eventActions(e)}
       </div>
     </li>`;
   }
 
-  function renderTimeline() {
+  function renderTimeline(onlyMilestones) {
     const el = $('timeline-content');
-    const events = store.getEntries().filter((e) => e.type === 'event').sort(byDateDesc);
-    if (!events.length) {
-      el.innerHTML = '<p class="empty-state">Noch nichts eingetragen. Notartermin, Schlüsselübergabe, Boden raus: Mit „+ Ereignis“ und ein paar Fotos festhalten.</p>';
+    const all = store.getEntries().filter((e) => e.type === 'event');
+    if (!all.length) {
+      el.innerHTML = '<p class="empty-state">Noch nichts eingetragen. Notartermin, Schlüsselübergabe, Boden raus oder der nächste Handwerkertermin: Mit „+ Ereignis“ festhalten.</p>';
       return;
     }
-    const years = [...new Set(events.map((e) => e.date.slice(0, 4)))];
-    el.innerHTML = years.map((y) => `<section>
+    const hasMilestones = all.some((e) => e.milestone);
+    const filtered = onlyMilestones && hasMilestones;
+    const show = (e) => !filtered || e.milestone;
+    const planned = plannedEvents().filter(show);
+    const done = all.filter((e) => store.eventStatus(e) === 'done' && show(e)).sort(byDateDesc);
+    const years = [...new Set(done.map((e) => e.date.slice(0, 4)))];
+
+    let html = hasMilestones
+      ? `<div class="chip-row" role="group" aria-label="Zeitstrahl filtern">
+          <button type="button" class="chip" data-action="filter-timeline" data-value="all" aria-pressed="${!filtered}">Alle</button>
+          <button type="button" class="chip" data-action="filter-timeline" data-value="milestones" aria-pressed="${filtered}">⭐ Nur Meilensteine</button>
+        </div>`
+      : '';
+    if (planned.length) {
+      html += `<section><h3 class="section-title">Als Nächstes</h3><ol class="timeline">${planned.map(timelineItem).join('')}</ol></section>`;
+    }
+    html += years.map((y) => `<section>
       <h3 class="section-title">${esc(y)}</h3>
-      <ol class="timeline">${events.filter((e) => e.date.startsWith(y)).map(timelineItem).join('')}</ol>
+      <ol class="timeline">${done.filter((e) => e.date.startsWith(y)).map(timelineItem).join('')}</ol>
     </section>`).join('');
+    el.innerHTML = html;
     hydrateImages(el);
   }
 
@@ -356,7 +415,14 @@
   }
 
   function typeBlock(e) {
-    if (e.type === 'event') return dl([['Datum', fmtDate(e.date)]]);
+    if (e.type === 'event') {
+      const status = store.eventStatus(e);
+      return dl([
+        ['Datum', fmtDate(e.date)],
+        ['Status', status === 'done' ? 'Erledigt' : 'Geplant, ' + relativeDay(e.date)],
+        ['Meilenstein', e.milestone ? '⭐ Ja' : ''],
+      ]) + eventActions(e);
+    }
     if (e.type === 'task') {
       const s = store.taskStatus(e);
       let status = 'Gerade nicht dran.';

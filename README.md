@@ -26,6 +26,9 @@ Hausplaner+.
 - **Jahr:** alle Aufgaben der nächsten 12 Monate.
 - **Zeitstrahl:** Ereignisse rund ums Haus (Notartermin, Schlüsselübergabe, Boden
   raus …) mit Datum, Text und Fotos/PDFs, nach Jahren gruppiert, das Neueste oben.
+  Ereignisse mit Datum in der Zukunft sind Termine: Sie stehen unter „Als Nächstes“
+  (auch auf der Startseite) und werden nach dem Termin als erledigt bestätigt oder
+  verschoben. Besondere Ereignisse lassen sich als ⭐ Meilenstein markieren und filtern.
 
 Beim ersten Start legt die App einen Grundstock typischer Aufgaben und die
 Zähler Gas/Strom/Wasser an – alles änder- und löschbar.

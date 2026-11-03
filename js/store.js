@@ -2,13 +2,18 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.3.0';
   const KEY = 'hauswiki:v1';
   const DB_NAME = 'hauswiki-files';
 
   function uid() {
     if (window.crypto?.randomUUID) return crypto.randomUUID();
     return 'id-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function todayIso() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
   function baseAreas() {
@@ -61,12 +66,19 @@
     return { version: 1, areas: baseAreas(), entries: seedEntries(), contacts: [], settings: { theme: 'system' } };
   }
 
+  function normalizeEntry(e) {
+    const entry = { tags: [], contactIds: [], files: [], text: '', ...e };
+    // Ereignisse aus Versionen vor 0.3.0: Was noch in der Zukunft liegt, gilt als geplant.
+    if (entry.type === 'event' && entry.planned === undefined) entry.planned = entry.date > todayIso();
+    return entry;
+  }
+
   function normalize(d) {
     const base = emptyData();
     return {
       version: 1,
       areas: Array.isArray(d.areas) ? d.areas : base.areas,
-      entries: Array.isArray(d.entries) ? d.entries.map((e) => ({ tags: [], contactIds: [], files: [], text: '', ...e })) : [],
+      entries: Array.isArray(d.entries) ? d.entries.map(normalizeEntry) : [],
       contacts: Array.isArray(d.contacts) ? d.contacts.map((c) => ({ areaIds: [], ...c })) : [],
       settings: { ...base.settings, ...(d.settings || {}) },
     };
@@ -184,6 +196,20 @@
       entry.prevDone = entry.lastDone || null;
       entry.lastDone = new Date().toISOString();
     }
+    notify();
+  }
+
+  // ---- Ereignisse ----
+  // upcoming: liegt in der Zukunft. due: geplant und der Tag ist da, wartet auf "Hat das geklappt?". done: gehört zur Historie.
+  function eventStatus(entry, today = todayIso()) {
+    if (entry.date > today) return 'upcoming';
+    return entry.planned ? 'due' : 'done';
+  }
+  function completeEvent(id) {
+    const entry = getEntry(id);
+    if (!entry) return;
+    entry.planned = false;
+    entry.updatedAt = new Date().toISOString();
     notify();
   }
 
@@ -321,12 +347,14 @@
 
   window.Store = {
     APP_VERSION,
+    todayIso,
     wasFresh: () => freshStart,
     getData: () => data,
     subscribe,
     getAreas, getArea, saveArea, deleteArea,
     getEntries, getEntry, saveEntry, deleteEntry,
     taskStatus, toggleTaskDone,
+    eventStatus, completeEvent,
     addReading, deleteReading,
     getContacts, getContact, saveContact, deleteContact,
     getSettings, updateSettings,
